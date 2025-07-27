@@ -7,9 +7,11 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
+use Google\Client;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -19,7 +21,6 @@ class AuthenticatedSessionController extends Controller
     public function create(Request $request): Response
     {
         return Inertia::render('auth/login', [
-            'canResetPassword' => Route::has('password.request'),
             'status' => $request->session()->get('status'),
         ]);
     }
@@ -27,13 +28,41 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request)
     {
-        $request->authenticate();
+        return response()->json([
+            'message' => "Login request received",
+        ]);
 
-        $request->session()->regenerate();
+    }
+    public function googleLogin(Request $request)
+    {
+        return Socialite::driver('google')->scopes(['email', 'profile'])->redirect();
+    }
+    public function googleCallback(Request $request): JsonResponse
+    {
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = Socialite::driver('google')->stateless()->user();
+
+        $token = $user->token;
+        $refreshToken = $user->refreshToken;
+        $expiresIn = $user->expiresIn;
+
+
+        // All providers...
+        $user->getId();
+        $user->getNickname();
+        $user->getName();
+        $user->getEmail();
+        $user->getAvatar();
+        return response()->json([
+            'message' => 'ok',
+            'user' => $user,
+            'token' => $token,
+            'refreshToken' => $refreshToken,
+            'expiresIn' => $expiresIn,
+        ]);
+        // dd($user, $token, $refreshToken, $expiresIn);
     }
 
     /**

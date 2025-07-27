@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string("description");
             $table->decimal("price", 10, 2);
             $table->integer("stock");
+            $table->string("image")->nullable();
             $table->foreignId("category_id")->constrained("product_categories");
             $table->softDeletes();
             $table->timestamps();
